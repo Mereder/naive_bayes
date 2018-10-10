@@ -54,9 +54,9 @@ def trainNaiveBayse(trainMatrix, trainCategory):
     pClass[0] = 0.33333; pClass[1] = 0.02531; pClass[2] = 0.32917; pClass[3] = 0.31204
     # pAbusive = sum(trainCategory) / float(numTrainDocs)
     p0Num = ones(numWords);     p1Num = ones(numWords)         # change to ones()
-    p2Num = ones(numWords);     p3Num = ones(numWords)
-    p0Denom = 2.0;     p1Denom = 2.0                           # change to 2.0
-    p2Denom = 2.0;     p3Denom = 2.0
+    p2Num = ones(numWords);     p3Num = ones(numWords)         #  拉普拉斯平滑处理  分子分母 分别加  r  和 k*r
+    p0Denom = 3.0;     p1Denom = 3.0                           # change to 4.0   k兰布达
+    p2Denom = 3.0;     p3Denom = 3.0                           # 3 的效果较好  调参结果
     for i in range(numTrainDocs):
         if trainCategory[i] == 'not_recom':
             p0Num += trainMatrix[i]
@@ -71,15 +71,11 @@ def trainNaiveBayse(trainMatrix, trainCategory):
             p3Num += trainMatrix[i]
             p3Denom += 1
     pVect = []
-    pVect.append(log(p0Num / p0Denom))
-    pVect.append(log(p0Num / p0Denom))
-    pVect.append(log(p0Num / p0Denom))
-    pVect.append(log(p0Num / p0Denom))
+    pVect.append(log(p0Num / p0Denom))                         # log 处理数值的一种损失函数方法，处理 浮点值问题
+    pVect.append(log(p1Num / p1Denom))                         # 浮点*浮点 数越来越小 计算机精度达不到 发生下越界
+    pVect.append(log(p2Num / p2Denom))
+    pVect.append(log(p3Num / p3Denom))
 
-    # p0Vect = log(p0Num / p0Denom)                              # change to log()
-    # p1Vect = log(p1Num / p1Denom)
-    # p2Vect = log(p0Num / p0Denom)
-    # p3Vect = log(p1Num / p1Denom)
     return pVect,pClass
 
 
@@ -90,7 +86,7 @@ def classifyNB(testVect, pVect, pClass):
     p3 = sum(testVect * pVect[3]) + log(pClass[3])
 
     muchBigger = max(p0,p1,p2,p3)
-    print(muchBigger)
+    # print(muchBigger)
     if muchBigger == p0:
         return 'not_recom'
     elif muchBigger == p1:
@@ -132,17 +128,14 @@ def testingNB():
     #     print(vect)           输出测试
     testnum = len(testSetNoLab)
     correctcnt = 0
-    print(testSetNoLab[0])
-    print(testSetLab[0])
+    # print(testSetNoLab[0])
+    # print(testSetLab[0])
     for i in range(testnum):
         testEntry = testSetNoLab[i]
         testVect = array(feat2Vec(testEntry,myFeatList))                    # 向量化测试用例
         if classifyNB(testVect,pVect,pClass) == testSetLab[i]:
             correctcnt += 1
-    print(correctcnt/testnum * 100)
-    # thisDoc = array(feat2Vec(, testEntry))
-    # print (testEntry, 'classified as: ', classifyNB(thisDoc, p0V, p1V, pAb))
-
+    print('Naive Bayes 准确率为：%.2f%%' % (correctcnt/testnum * 100))
 
 if __name__ == '__main__':
     testingNB()
